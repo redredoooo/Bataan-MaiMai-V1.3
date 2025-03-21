@@ -74,6 +74,11 @@
         <button onclick="deleteCurrentlyPlaying()" class="bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded">Clear Currently Playing</button>
     </div>
 
+    <!-- Server Restart -->
+    <div class="mt-6">
+        <button onclick="restartBackend()" class="bg-red-500 hover:bg-red-700 text-white py-2 px-4 rounded">Server Restart</button>
+    </div>
+
     <script>
         const socket = io("https://bataan-maimai-v1-3.onrender.com"); // Replace with actual backend URL
         let isAdmin = false;
