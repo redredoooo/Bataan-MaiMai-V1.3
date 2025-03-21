@@ -171,7 +171,23 @@
         function deleteCurrentlyPlaying() {
             socket.emit("deleteCurrentlyPlaying");
         }
-        
+
+        function restartBackend() {
+            fetch("https://api.render.com/deploy/srv-c1234567/deploy-hook?key=nLT66_CWs3M", {
+                method: "POST"
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Backend restart triggered!");
+                } else {
+                    alert("Failed to restart backend.");
+                }
+            })
+            .catch(error => {
+                console.error("Error restarting backend:", error);
+            });
+        }
+
         // Update Currently Playing Display
         function updatePlayingDisplay(playing) {
             const playingList = document.getElementById("playingList");
