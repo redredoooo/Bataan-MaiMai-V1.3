@@ -12,6 +12,7 @@ const io = socketIo(server, {
 });
 
 let queue = [];
+let gameHistory = [];
 let currentlyPlaying = [];
 let adminAuthenticated = false;
 const adminPassword = "Nachi";
@@ -79,27 +80,37 @@ io.on("connection", (socket) => {
       socket.emit("displayCurrentPair", [], []);
     }
   });
+  
   // Next Pair Playing - Replace Current Pair
   socket.on("nextPairPlaying", () => {
-    if (queue.length >= 2) {
-      const pair = queue.splice(0, 2); // Get top 2 players
+      if (queue.length >= 2) {
+          const pair = queue.splice(0, 2); // Get top 2 players
   
-      // Replace current pair if already playing
-      if (currentlyPlaying.length > 0) {
-        currentlyPlaying = []; // Clear existing pair
+          // Add to game history
+          const timestamp = new Date().toISOString();
+          gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
+  
+          // Replace current pair if already playing
+          if (currentlyPlaying.length > 0) {
+              currentlyPlaying = []; // Clear existing pair
+          }
+          currentlyPlaying = pair; // Add new pair to currently playing
+  
+          io.emit("queueUpdate", queue);
+          io.emit("playingUpdate", currentlyPlaying);
+          io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
+      } else {
+          socket.emit("errorMessage", "Not enough players in the queue.");
       }
-      currentlyPlaying = pair; // Add new pair to currently playing
+  });
   
-      io.emit("queueUpdate", queue);
-      io.emit("playingUpdate", currentlyPlaying);
-    } else {
-      socket.emit("errorMessage", "Not enough players in the queue.");
-    }
+  socket.on("requestGameHistory", () => {
+    socket.emit("gameHistoryUpdate", gameHistory);
   });
 
   // Clear Currently Playing
   socket.on("deleteCurrentlyPlaying", () => {
-    currentlyPlaying = [];
+    currentlyPlaying = [];a
     io.emit("playingUpdate", currentlyPlaying);
   });
 });
