@@ -140,6 +140,38 @@
             .catch(console.error);
         }
 
+        function deleteTopPair() {
+            socket.emit("deleteTopPair");
+        }
+
+        function showCurrentPair() {
+            socket.emit('getCurrentPair');
+        }
+
+        function nextPairPlaying() {
+            socket.emit("nextPairPlaying");
+        }
+
+        function deleteCurrentlyPlaying() {
+            socket.emit("deleteCurrentlyPlaying");
+        }
+
+        function restartBackend() {
+            fetch("https://api.render.com/deploy/srv-cvcdpupu0jms73eqmvag?key=nLT66_CWs3M", {
+                method: "POST"
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Backend restart triggered!");
+                } else {
+                    alert("Failed to restart backend.");
+                }
+            })
+            .catch(error => {
+                console.error("Error restarting backend:", error);
+            });
+        }
+
         // Function to update game history display
         function updateGameHistoryDisplay(history) {
             const gameHistoryList = document.getElementById("gameHistoryList");
