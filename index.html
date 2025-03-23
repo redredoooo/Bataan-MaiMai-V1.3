@@ -179,7 +179,7 @@
             history.forEach((entry, index) => {
                 const div = document.createElement("div");
                 div.className = "p-2 bg-gray-700 rounded text-center";
-                div.textContent = `Game ${index + 1}: ${entry.players.join(" vs ")} - Ended at ${new Date(entry.timestamp).toLocaleString()}`;
+                div.textContent = `Game ${index + 1}: ${entry.players.join(" vs ")} - Started at ${new Date(entry.timestamp).toLocaleString()}`;
                 gameHistoryList.appendChild(div);
             });
         }
