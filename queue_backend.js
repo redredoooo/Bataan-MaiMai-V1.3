@@ -7,8 +7,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*"
-  }
+    origin: "*",
+  },
 });
 
 let queue = [];
@@ -77,44 +77,44 @@ io.on("connection", (socket) => {
     if (queue.length >= 2) {
       socket.emit("displayCurrentPair", [queue[0].name, queue[1].name]);
     } else {
-      socket.emit("displayCurrentPair", [], []);
+      socket.emit("displayCurrentPair", []);
     }
   });
-  
+
   // Next Pair Playing - Replace Current Pair
   socket.on("nextPairPlaying", () => {
-      if (queue.length >= 2) {
-          const pair = queue.splice(0, 2); // Get top 2 players
-  
-          // Add to game history
-          const timestamp = new Date().toISOString();
-          gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
-  
-          // Replace current pair if already playing
-          if (currentlyPlaying.length > 0) {
-              currentlyPlaying = []; // Clear existing pair
-          }
-          currentlyPlaying = pair; // Add new pair to currently playing
-  
-          io.emit("queueUpdate", queue);
-          io.emit("playingUpdate", currentlyPlaying);
-          io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
-      } else {
-          socket.emit("errorMessage", "Not enough players in the queue.");
-      }
+    if (queue.length >= 2) {
+      const pair = queue.splice(0, 2); // Get top 2 players
+
+      // Add to game history
+      const timestamp = new Date().toISOString();
+      gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
+
+      // Replace current pair if already playing
+      currentlyPlaying = pair;
+
+      io.emit("queueUpdate", queue);
+      io.emit("playingUpdate", currentlyPlaying);
+      io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
+    } else {
+      socket.emit("errorMessage", "Not enough players in the queue.");
+    }
   });
-  
+
   socket.on("requestGameHistory", () => {
     socket.emit("gameHistoryUpdate", gameHistory);
   });
 
   // Clear Currently Playing
   socket.on("deleteCurrentlyPlaying", () => {
-    currentlyPlaying = [];a
+    currentlyPlaying = [];
     io.emit("playingUpdate", currentlyPlaying);
   });
-});
 
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
