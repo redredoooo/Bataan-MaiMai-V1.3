@@ -61,6 +61,9 @@
             gap: 1rem;
             padding: 1rem 0;
             scroll-snap-type: x mandatory;
+            -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+            scroll-behavior: smooth; /* Enable smooth scrolling */
         }
 
         .scroll-container::-webkit-scrollbar {
@@ -390,6 +393,58 @@
 
                 container.addEventListener("touchend", () => {
                     container.isScrolling = false;
+                });
+            });
+        });
+
+        // Enable tap-drag (sliding) for scrollable containers
+        document.addEventListener("DOMContentLoaded", () => {
+            const scrollContainers = document.querySelectorAll(".scroll-container");
+
+            scrollContainers.forEach(container => {
+                let isDragging = false;
+                let startX, scrollLeft;
+
+                container.addEventListener("mousedown", (e) => {
+                    isDragging = true;
+                    container.classList.add("dragging");
+                    startX = e.pageX - container.offsetLeft;
+                    scrollLeft = container.scrollLeft;
+                });
+
+                container.addEventListener("mouseleave", () => {
+                    isDragging = false;
+                    container.classList.remove("dragging");
+                });
+
+                container.addEventListener("mouseup", () => {
+                    isDragging = false;
+                    container.classList.remove("dragging");
+                });
+
+                container.addEventListener("mousemove", (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const x = e.pageX - container.offsetLeft;
+                    const walk = (x - startX) * 1.5; // Adjust scroll speed for smoother movement
+                    container.scrollLeft = scrollLeft - walk;
+                });
+
+                container.addEventListener("touchstart", (e) => {
+                    isDragging = true;
+                    startX = e.touches[0].pageX - container.offsetLeft;
+                    scrollLeft = container.scrollLeft;
+                });
+
+                container.addEventListener("touchend", () => {
+                    isDragging = false;
+                });
+
+                container.addEventListener("touchmove", (e) => {
+                    if (!isDragging) return;
+                    const x = e.touches[0].pageX - container.offsetLeft;
+                    const walk = (x - startX) * 1.5; // Adjust scroll speed for smoother movement
+                    container.scrollLeft = scrollLeft - walk;
                 });
             });
         });
