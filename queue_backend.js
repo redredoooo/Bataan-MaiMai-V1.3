@@ -2,6 +2,8 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +18,16 @@ let gameHistory = [];
 let currentlyPlaying = [];
 let adminAuthenticated = false;
 const adminPassword = "Nachi";
+
+const historyFilePath = path.join(__dirname, "game_history.txt");
+
+// Helper function to save game history to a file
+function saveGameHistoryToFile() {
+  const historyData = gameHistory.map(entry => 
+    `Game: ${entry.players.join(" vs ")} - Started at ${entry.timestamp}`
+  ).join("\n");
+  fs.writeFileSync(historyFilePath, historyData, "utf8");
+}
 
 // Admin Login
 io.on("connection", (socket) => {
@@ -90,6 +102,9 @@ io.on("connection", (socket) => {
       const timestamp = new Date().toISOString();
       gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
 
+      // Save history to file
+      saveGameHistoryToFile();
+
       // Replace current pair if already playing
       currentlyPlaying = pair;
 
@@ -114,6 +129,11 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
+});
+
+// Serve game history file
+app.get("/game-history", (req, res) => {
+  res.sendFile(historyFilePath);
 });
 
 const PORT = process.env.PORT || 3000;
