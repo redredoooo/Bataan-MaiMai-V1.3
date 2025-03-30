@@ -54,27 +54,29 @@
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 0 25px rgba(255, 255, 255, 0.2);
         }
 
-        /* Horizontal scroll styling */
+        /* Vertical scroll styling */
         .scroll-container {
             display: flex;
-            overflow-x: auto;
+            flex-direction: column; /* Change to vertical layout */
+            overflow-y: auto; /* Enable vertical scrolling */
             gap: 1rem;
             padding: 1rem 0;
-            scroll-snap-type: x mandatory;
+            scroll-snap-type: y mandatory; /* Vertical snap scrolling */
             -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
             scrollbar-width: none; /* Hide scrollbar for Firefox */
             scroll-behavior: smooth; /* Enable smooth scrolling */
+            max-height: 60vh; /* Limit height for better usability */
         }
 
         .scroll-container::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for better mobile experience */
+            display: none; /* Hide scrollbar for WebKit browsers */
         }
 
         .scroll-item {
             flex: 0 0 auto;
             scroll-snap-align: center;
-            width: 260px; /* Increased by 30% */
-            height: 195px; /* Increased by 30% */
+            width: 100%; /* Full width for vertical scrolling */
+            height: 195px; /* Maintain consistent height */
             background: #444;
             border-radius: 12px;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
@@ -245,11 +247,19 @@
 
         function fetchGameHistory() {
             fetch("/game-history")
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById("historyContent").textContent = data;
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch game history.");
+                    }
+                    return response.text();
                 })
-                .catch(error => console.error("Error fetching game history:", error));
+                .then(data => {
+                    document.getElementById("historyContent").textContent = data || "No game history available.";
+                })
+                .catch(error => {
+                    console.error("Error fetching game history:", error);
+                    document.getElementById("historyContent").textContent = "Error loading game history. Please try again later.";
+                });
         }
 
         function toggleAdminControls(show) {
