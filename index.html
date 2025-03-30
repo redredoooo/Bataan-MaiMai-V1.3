@@ -258,21 +258,26 @@
         }
 
         function fetchGameHistory() {
-            fetch("/game-history")
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch game history.");
-                    }
-                    return response.text();
-                })
-                .then(data => {
-                    document.getElementById("historyContent").textContent = data || "No game history available.";
-                })
-                .catch(error => {
-                    console.error("Error fetching game history:", error);
-                    document.getElementById("historyContent").textContent = "Error loading game history. Please try again later.";
-                });
+            socket.emit("requestGameHistory"); // Request game history from the server
         }
+
+        // Update game history display
+        function updateGameHistoryDisplay(history) {
+            const historyContent = document.getElementById("historyContent");
+            historyContent.innerHTML = history.length
+                ? history
+                      .map(
+                          entry =>
+                              `<div class="p-2 bg-gray-700 rounded text-center">Game: ${entry.players.join(
+                                  " vs "
+                              )} - Started at ${new Date(entry.timestamp).toLocaleString()}</div>`
+                      )
+                      .join("")
+                : "No game history available.";
+        }
+
+        // Listen for game history updates
+        socket.on("gameHistoryUpdate", updateGameHistoryDisplay);
 
         function toggleAdminControls(show) {
             document.getElementById('admin-login').classList.toggle('hidden', show);
