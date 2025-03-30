@@ -21,6 +21,11 @@ const adminPassword = "Nachi";
 
 const historyFilePath = path.join(__dirname, "game_history.txt");
 
+// Ensure the game history file exists
+if (!fs.existsSync(historyFilePath)) {
+  fs.writeFileSync(historyFilePath, "", "utf8");
+}
+
 // Helper function to save game history to a file
 function saveGameHistoryToFile() {
   const historyData = gameHistory.map(entry => 
@@ -133,7 +138,11 @@ io.on("connection", (socket) => {
 
 // Serve game history file
 app.get("/game-history", (req, res) => {
-  res.sendFile(historyFilePath);
+  if (fs.existsSync(historyFilePath)) {
+    res.sendFile(historyFilePath);
+  } else {
+    res.status(404).send("Game history file not found.");
+  }
 });
 
 const PORT = process.env.PORT || 3000;
