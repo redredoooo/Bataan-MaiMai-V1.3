@@ -26,6 +26,22 @@ if (!fs.existsSync(historyFilePath)) {
   fs.writeFileSync(historyFilePath, "", "utf8");
 }
 
+// Load game history from file on server start
+if (fs.existsSync(historyFilePath)) {
+  const fileData = fs.readFileSync(historyFilePath, "utf8");
+  gameHistory = fileData
+    .split("\n")
+    .filter(line => line.trim() !== "")
+    .map(line => {
+      const match = line.match(/Game: (.+) - Started at (.+)/);
+      if (match) {
+        return { players: match[1].split(" vs "), timestamp: match[2] };
+      }
+      return null;
+    })
+    .filter(entry => entry !== null);
+}
+
 // Helper function to save game history to a file
 function saveGameHistoryToFile() {
   const historyData = gameHistory.map(entry => 
@@ -129,8 +145,9 @@ io.on("connection", (socket) => {
     }
 });
 
+  // Request Game History
   socket.on("requestGameHistory", () => {
-    socket.emit("gameHistoryUpdate", gameHistory);
+    socket.emit("gameHistoryUpdate", gameHistory); // Emit the in-memory game history
   });
 
   // Clear Currently Playing
