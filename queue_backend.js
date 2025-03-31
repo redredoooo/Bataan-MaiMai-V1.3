@@ -122,8 +122,8 @@ io.on("connection", (socket) => {
   socket.on("nextPairPlaying", async (callback) => {
     if (queue.length >= 2) {
       const pair = queue.slice(0, 2);
-      if (!pair[0].paid || !pair[1].paid) {
-        const unpaidPlayer = !pair[0].paid ? pair[0].name : pair[1].name;
+      if (pair.some(player => !player.paid)) {
+        const unpaidPlayer = pair.find(player => !player.paid).name;
         callback({ error: `${unpaidPlayer} is not yet paid.` });
         return;
       }
@@ -133,7 +133,11 @@ io.on("connection", (socket) => {
       const entry = { players: [pair[0].name, pair[1].name], timestamp };
       gameHistory.push(entry);
 
-      await saveGameHistory(entry);
+      try {
+        await saveGameHistory(entry);
+      } catch (err) {
+        winston.error("Error saving game history:", err);
+      }
 
       currentlyPlaying = pair;
       io.emit("queueUpdate", queue);
