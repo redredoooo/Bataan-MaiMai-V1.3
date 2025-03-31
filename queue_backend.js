@@ -149,8 +149,14 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("requestGameHistory", () => {
-    socket.emit("gameHistoryUpdate", gameHistory);
+  socket.on("requestGameHistory", async () => {
+    try {
+      const history = await gameHistoryCollection.find().toArray();
+      socket.emit("gameHistoryUpdate", history);
+    } catch (err) {
+      winston.error("Error fetching game history:", err);
+      socket.emit("error", "Failed to fetch game history.");
+    }
   });
 
   socket.on("deleteCurrentlyPlaying", () => {
