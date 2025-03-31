@@ -113,8 +113,8 @@
 <body class="text-white min-h-screen flex flex-col items-center py-10 px-4">
     <h1 class="text-4xl font-extrabold mb-6 text-center fade-in p-4">MaiMai Bataan</h1>
 
-    <!-- Currently Playing Section -->
-    <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
+    <!-- Currently Playing Section (Landing Page) -->
+    <div id="currently-playing-landing" class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
         <h2 class="text-2xl font-semibold mb-4 text-center">Currently Playing</h2>
         <div id="playingListTop" class="grid grid-cols-2 gap-4"></div>
     </div>
@@ -144,6 +144,12 @@
 
     <!-- Queue Page -->
     <div id="queue-page" class="hidden fade-in">
+        <!-- Currently Playing Section (Queue Page) -->
+        <div id="currently-playing-queue" class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
+            <h2 class="text-2xl font-semibold mb-4 text-center">Currently Playing</h2>
+            <div id="playingList" class="grid grid-cols-2 gap-4"></div>
+        </div>
+
         <!-- Admin Login -->
         <div id="admin-login" class="mt-6 w-full max-w-md fade-in">
             <input type="password" id="adminPassword" placeholder="Enter Admin Password" class="p-3 rounded bg-gray-800 text-white w-full mb-4 soft-glow">
@@ -266,12 +272,14 @@
 
         function adminLogin() {
             const password = document.getElementById('adminPassword').value;
-            if (password === 'Nachi') {
+            socket.emit("adminLogin", password); // Send password to backend
+            socket.on("loginSuccess", () => {
                 toggleAdminControls(true);
-                alert('Admin login successful!');
-            } else {
-                alert('Incorrect password!');
-            }
+                alert("Admin login successful!");
+            });
+            socket.on("loginFailed", () => {
+                alert("Incorrect password!");
+            });
         }
 
         function adminLogout() {
@@ -289,19 +297,19 @@
         }
 
         function updatePlayingDisplay(playing) {
-            const playingList = document.getElementById("playingList");
             const playingListTop = document.getElementById("playingListTop");
+            const playingListQueue = document.getElementById("playingList");
             const content = playing.map((player, index) =>
                 `<div class="p-2 bg-green-700 rounded text-center">${index + 1}. ${player.name} (Playing)</div>`
             ).join('');
-            playingList.innerHTML = content;
-            playingListTop.innerHTML = content;
+            if (playingListTop) playingListTop.innerHTML = content;
+            if (playingListQueue) playingListQueue.innerHTML = content;
         }
 
         function addPlayer() {
             const name = document.getElementById("playerName").value.trim();
             if (name) {
-                socket.emit("addPlayer", name);
+                socket.emit("addPlayer", { name }); // Fix: Pass an object with the name property
                 document.getElementById("playerName").value = "";
             }
         }
@@ -490,13 +498,13 @@
         }
 
         function updatePlayingDisplay(playing) {
-            const playingList = document.getElementById("playingList");
             const playingListTop = document.getElementById("playingListTop");
+            const playingListQueue = document.getElementById("playingList");
             const content = playing.map((player, index) =>
                 `<div class="p-2 bg-green-700 rounded text-center">${index + 1}. ${player.name} (Playing)</div>`
             ).join('');
-            playingList.innerHTML = content;
-            playingListTop.innerHTML = content;
+            if (playingListTop) playingListTop.innerHTML = content;
+            if (playingListQueue) playingListQueue.innerHTML = content;
         }
 
         function updateQueueDisplay(queue) {
