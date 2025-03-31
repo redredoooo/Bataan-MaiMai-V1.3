@@ -54,78 +54,58 @@
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 0 25px rgba(255, 255, 255, 0.2);
         }
 
-        /* Vertical scroll styling */
-        .scroll-container {
-            display: flex;
-            flex-direction: column; /* Change to vertical layout */
-            overflow-y: auto; /* Enable vertical scrolling */
-            gap: 1rem;
-            padding: 1rem 0;
-            scroll-snap-type: y mandatory; /* Vertical snap scrolling */
-            -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
-            scrollbar-width: none; /* Hide scrollbar for Firefox */
-            scroll-behavior: smooth; /* Enable smooth scrolling */
-            max-height: 60vh; /* Limit height for better usability */
-        }
-
-        .scroll-container::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for WebKit browsers */
-        }
-
-        .scroll-item {
-            flex: 0 0 auto;
-            scroll-snap-align: center;
-            width: 1080px; /* Adjusted width */
-            height: 1350px; /* Adjusted height */
-            background: #444;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-        }
-
-        /* Responsive adjustments for mobile */
-        @media (max-width: 640px) {
+        /* Responsive adjustments */
+        @media (min-width: 1024px) {
+            /* Desktop-specific styles */
             h1 {
-                font-size: 1.5rem; /* Adjust title size for smaller screens */
+                font-size: 3rem;
             }
 
             .scroll-item {
-                width: 180px; /* Reduce width for better fit */
-                height: 135px; /* Reduce height proportionally */
-            }
-
-            .soft-glow {
-                box-shadow: 0 0 5px rgba(255, 255, 255, 0.2), 0 0 10px rgba(255, 255, 255, 0.1);
-            }
-
-            .soft-glow:hover {
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2);
-            }
-
-            .fade-in {
-                padding: 1rem; /* Add padding for better spacing */
-            }
-
-            button {
-                font-size: 0.875rem; /* Adjust button text size */
-                padding: 0.75rem 1rem; /* Adjust button padding */
-            }
-
-            #queueList, #playingList, #historyContent {
-                grid-template-columns: 1fr; /* Single column layout for smaller screens */
+                width: 800px;
+                height: 600px;
             }
 
             .max-w-2xl {
-                max-width: 100%; /* Use full width on mobile */
+                max-width: 80%;
             }
 
             .overflow-y-auto {
-                max-height: 60vh; /* Limit height for scrollable areas */
+                max-height: 70vh;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 1rem 2rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            /* Mobile-specific styles */
+            h1 {
+                font-size: 2rem;
+            }
+
+            .scroll-item {
+                width: 100%;
+                height: auto;
+            }
+
+            .max-w-2xl {
+                max-width: 100%;
+            }
+
+            .overflow-y-auto {
+                max-height: 50vh;
+            }
+
+            button {
+                font-size: 0.875rem;
+                padding: 0.75rem 1rem;
+            }
+
+            #queueList, #playingList, #historyContent {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -133,7 +113,7 @@
 <body class="text-white min-h-screen flex flex-col items-center py-10 px-4">
     <h1 class="text-4xl font-extrabold mb-6 text-center fade-in p-4">MaiMai Bataan</h1>
 
-    <!-- Currently Playing Section (Duplicate) -->
+    <!-- Currently Playing Section -->
     <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
         <h2 class="text-2xl font-semibold mb-4 text-center">Currently Playing</h2>
         <div id="playingListTop" class="grid grid-cols-2 gap-4"></div>
@@ -151,7 +131,6 @@
                     <div class="flex-shrink-0 w-full">
                         <img src="announcement02.png" alt="Announcement 2" class="w-full h-auto object-cover rounded-lg">
                     </div>
-                    <!-- ...additional slides... -->
                 </div>
                 <button onclick="prevSlide()" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded">❮</button>
                 <button onclick="nextSlide()" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded">❯</button>
@@ -191,7 +170,7 @@
 
         <!-- Admin Controls -->
         <div id="admin-controls" class="mt-6 hidden w-full max-w-2xl fade-in">
-            <div class="mb-4">
+            <div class="mb-4"></div>
                 <input type="text" id="playerName" placeholder="Enter player name" class="p-3 rounded bg-gray-800 text-white w-full mb-2 soft-glow">
                 <button onclick="addPlayer()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Add Player</button>
             </div>
