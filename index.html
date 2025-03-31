@@ -168,144 +168,154 @@
     </style>
 </head>
 <body>
-    <!-- HEADER -->
-    <header class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#">Bataan MaiMai Community</a>
-            <div class="d-flex">
-                <button class="btn btn-primary me-2" onclick="navigateTo('landing-page')">Home</button>
-                <button class="btn btn-primary me-2" onclick="navigateTo('queue-page')">Queue</button>
-                <button class="btn btn-primary me-2" onclick="navigateTo('history-page')">History</button>
-                <button class="btn btn-primary" onclick="navigateTo('admin-page')">Admin</button>
-            </div>
-        </div>
-    </header>
+    <!-- DEVICE SELECTION PROMPT -->
+    <div id="device-selection" class="d-flex flex-column align-items-center justify-content-center vh-100">
+        <h1 class="mb-4">What device are you using?</h1>
+        <button class="btn btn-primary mb-3" onclick="loadDevice('mobile')">Mobile</button>
+        <button class="btn btn-primary" onclick="loadDevice('desktop')">Desktop</button>
+    </div>
 
     <!-- MAIN CONTENT -->
-    <main class="container mt-5 pt-5">
-        <!-- LANDING PAGE -->
-        <section id="landing-page" class="fade-in text-center">
-            <div class="mt-4">
-                <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-indicators">
-                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+    <main id="main-content" class="d-none">
+        <!-- HEADER -->
+        <header class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" href="#">Bataan MaiMai Community</a>
+                <div class="d-flex">
+                    <button class="btn btn-primary me-2" onclick="navigateTo('landing-page')">Home</button>
+                    <button class="btn btn-primary me-2" onclick="navigateTo('queue-page')">Queue</button>
+                    <button class="btn btn-primary me-2" onclick="navigateTo('history-page')">History</button>
+                    <button class="btn btn-primary" onclick="navigateTo('admin-page')">Admin</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="container mt-5 pt-5">
+            <!-- LANDING PAGE -->
+            <section id="landing-page" class="fade-in text-center">
+                <div class="mt-4">
+                    <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-indicators">
+                            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                        </div>
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="Announcement01.png" class="d-block w-100 rounded" alt="Announcement 1">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="Announcement02.png" class="d-block w-100 rounded" alt="Announcement 2">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="Announcement03.png" class="d-block w-100 rounded" alt="Announcement 3">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="Announcement04.png" class="d-block w-100 rounded" alt="Announcement 4">
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
                     </div>
-                    <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            <img src="announcement01.png" class="d-block w-100 rounded" alt="Announcement 1">
-                        </div>
-                        <div class="carousel-item">
-                            <img src="announcement02.png" class="d-block w-100 rounded" alt="Announcement 2">
-                        </div>
-                        <div class="carousel-item">
-                            <img src="announcement03.png" class="d-block w-100 rounded" alt="Announcement 3">
-                        </div>
-                        <div class="carousel-item">
-                            <img src="announcement04.png" class="d-block w-100 rounded" alt="Announcement 4">
-                        </div>
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- QUEUE PAGE -->
-        <section id="queue-page" class="d-none">
-            <div class="card bg-white text-dark mt-4">
-                <div class="card-body">
-                    <h2 class="card-title text-center">Currently Playing</h2>
-                    <div id="playingList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
-                </div>
-            </div>
-            <div class="card bg-white text-dark mt-4">
-                <div class="card-body">
-                    <h2 class="card-title text-center">Current Queue</h2>
-                    <p class="text-center">Total Queued Players: <span id="queueCount" class="fw-bold">0</span></p>
-                    <div id="queueList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- HISTORY PAGE -->
-        <section id="history-page" class="d-none">
-            <div class="card bg-light text-dark mt-4">
-                <div class="card-body">
-                    <h2 class="card-title text-center">Game History</h2>
-                    <div id="gameHistoryList" class="row g-3"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ADMIN PAGE -->
-        <section id="admin-page" class="d-none">
-            <div id="admin-login" class="mt-4">
-                <input type="password" id="adminPassword" placeholder="Enter Admin Password" class="form-control mb-3">
-                <button onclick="adminLogin()" class="btn btn-dark w-100">Admin Login</button>
-            </div>
-            <div id="admin-controls" class="d-none">
-                <button onclick="adminLogout()" class="btn btn-dark w-100 mb-3">Logout</button>
-                <div class="card bg-white text-black mt-4">
+            <!-- QUEUE PAGE -->
+            <section id="queue-page" class="d-none">
+                <div class="card bg-white text-dark mt-4">
                     <div class="card-body">
                         <h2 class="card-title text-center">Currently Playing</h2>
-                        <div id="adminPlayingList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
+                        <div id="playingList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
                     </div>
                 </div>
-                <div class="card bg-white text-black mt-4">
+                <div class="card bg-white text-dark mt-4">
                     <div class="card-body">
                         <h2 class="card-title text-center">Current Queue</h2>
-                        <p class="text-center">Total Queued Players: <span id="adminQueueCount" class="fw-bold">0</span></p>
-                        <div id="adminQueueList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
+                        <p class="text-center">Total Queued Players: <span id="queueCount" class="fw-bold">0</span></p>
+                        <div id="queueList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <input type="text" id="playerName" placeholder="Enter player name" class="form-control mb-3">
-                    <button onclick="addPlayer()" class="btn btn-dark w-100 mb-3">Add Player</button>
-                    <div class="row g-3">
-                        <div class="col">
-                            <input type="number" id="pos1" placeholder="Position 1" class="form-control">
-                        </div>
-                        <div class="col">
-                            <input type="number" id="pos2" placeholder="Position 2" class="form-control">
-                        </div>
-                        <div class="col-12">
-                            <button onclick="swapPlayers()" class="btn btn-dark w-100">Swap</button>
-                        </div>
-                    </div>
-                    <div class="row g-3 mt-3">
-                        <div class="col">
-                            <input type="number" id="deletePos" placeholder="Position to Delete" class="form-control">
-                        </div>
-                        <div class="col-12">
-                            <button onclick="deletePlayerByPosition()" class="btn btn-dark w-100">Delete Player</button>
-                        </div>
-                    </div>
-                    <div class="row g-3 mt-3">
-                        <div class="col">
-                            <input type="number" id="paidPos" placeholder="Position to Mark Paid" class="form-control">
-                        </div>
-                        <div class="col-12">
-                            <button onclick="markPlayerPaid()" class="btn btn-dark w-100">Mark Paid</button>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-wrap gap-3 justify-content-center mt-3">
-                        <button onclick="deleteTopPair()" class="btn btn-dark">Delete Top Pair</button>
-                        <button onclick="nextPairPlaying()" class="btn btn-dark">Next Pair Playing</button>
-                        <button onclick="deleteCurrentlyPlaying()" class="btn btn-dark">Clear Currently Playing</button>
-                        <button onclick="restartBackend()" class="btn btn-dark">Server Restart</button>
+            </section>
+
+            <!-- HISTORY PAGE -->
+            <section id="history-page" class="d-none">
+                <div class="card bg-light text-dark mt-4">
+                    <div class="card-body">
+                        <h2 class="card-title text-center">Game History</h2>
+                        <div id="gameHistoryList" class="row g-3"></div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <!-- ADMIN PAGE -->
+            <section id="admin-page" class="d-none">
+                <div id="admin-login" class="mt-4">
+                    <input type="password" id="adminPassword" placeholder="Enter Admin Password" class="form-control mb-3">
+                    <button onclick="adminLogin()" class="btn btn-dark w-100">Admin Login</button>
+                </div>
+                <div id="admin-controls" class="d-none">
+                    <button onclick="adminLogout()" class="btn btn-dark w-100 mb-3">Logout</button>
+                    <div class="card bg-white text-black mt-4">
+                        <div class="card-body">
+                            <h2 class="card-title text-center">Currently Playing</h2>
+                            <div id="adminPlayingList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
+                        </div>
+                    </div>
+                    <div class="card bg-white text-black mt-4">
+                        <div class="card-body">
+                            <h2 class="card-title text-center">Current Queue</h2>
+                            <p class="text-center">Total Queued Players: <span id="adminQueueCount" class="fw-bold">0</span></p>
+                            <div id="adminQueueList" class="row row-cols-1 row-cols-sm-2 g-3"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <input type="text" id="playerName" placeholder="Enter player name" class="form-control mb-3">
+                        <button onclick="addPlayer()" class="btn btn-dark w-100 mb-3">Add Player</button>
+                        <div class="row g-3">
+                            <div class="col">
+                                <input type="number" id="pos1" placeholder="Position 1" class="form-control">
+                            </div>
+                            <div class="col">
+                                <input type="number" id="pos2" placeholder="Position 2" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <button onclick="swapPlayers()" class="btn btn-dark w-100">Swap</button>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col">
+                                <input type="number" id="deletePos" placeholder="Position to Delete" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <button onclick="deletePlayerByPosition()" class="btn btn-dark w-100">Delete Player</button>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col">
+                                <input type="number" id="paidPos" placeholder="Position to Mark Paid" class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <button onclick="markPlayerPaid()" class="btn btn-dark w-100">Mark Paid</button>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 justify-content-center mt-3">
+                            <button onclick="deleteTopPair()" class="btn btn-dark">Delete Top Pair</button>
+                            <button onclick="nextPairPlaying()" class="btn btn-dark">Next Pair Playing</button>
+                            <button onclick="deleteCurrentlyPlaying()" class="btn btn-dark">Clear Currently Playing</button>
+                            <button onclick="restartBackend()" class="btn btn-dark">Server Restart</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </main>
 
     <!-- FOOTER -->
@@ -497,7 +507,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            navigateTo("landing-page");
+            document.getElementById('device-selection').classList.remove('d-none');
         });
 
         // Update Queue Display for Admin Panel
@@ -516,6 +526,15 @@
             adminPlayingList.innerHTML = playing.map((player, index) =>
                 `<div class="p-2 bg-#fface3 rounded text-center">${index + 1}. ${player.name} (Playing)</div>`
             ).join('');
+        }
+
+        function loadDevice(device) {
+            if (device === 'desktop') {
+                window.location.href = 'dindex.html';
+            } else {
+                document.getElementById('device-selection').classList.add('d-none');
+                document.getElementById('main-content').classList.remove('d-none');
+            }
         }
     </script>
 </body>
