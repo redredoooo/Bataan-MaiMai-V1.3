@@ -1,9 +1,11 @@
+require("dotenv").config();
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
+const Joi = require("joi");
+const winston = require("winston");
+const connectToDatabase = require("./config/database");
 
 const app = express();
 const server = http.createServer(app);
@@ -13,67 +15,96 @@ const io = socketIo(server, {
   },
 });
 
+// Logger setup
+winston.add(new winston.transports.Console());
+winston.add(new winston.transports.File({ filename: "app.log" }));
+
+// Environment variables
+const adminPassword = process.env.ADMIN_PASSWORD;
+const port = process.env.PORT || 3000;
+
 let queue = [];
 let gameHistory = [];
 let currentlyPlaying = [];
-let adminAuthenticated = false;
-const adminPassword = "Nachi";
+let gameHistoryCollection;
 
-const historyFilePath = path.join(__dirname, "game_history.txt");
+// Input validation schemas
+const playerSchema = Joi.object({
+  name: Joi.string().min(1).required(),
+  paid: Joi.boolean().optional(),
+});
 
-// Ensure the game history file exists
-if (!fs.existsSync(historyFilePath)) {
-  fs.writeFileSync(historyFilePath, "", "utf8");
+const positionSchema = Joi.object({
+  pos1: Joi.number().integer().min(0).required(),
+  pos2: Joi.number().integer().min(0).required(),
+});
+
+// Connect to MongoDB and initialize the game history collection
+(async () => {
+  try {
+    const db = await connectToDatabase();
+    gameHistoryCollection = db.collection("gameHistory");
+    gameHistory = await gameHistoryCollection.find().toArray();
+    winston.info("Game history loaded from MongoDB");
+  } catch (err) {
+    winston.error("Error initializing database:", err);
+  }
+})();
+
+// Helper function to save game history to MongoDB
+async function saveGameHistory(entry) {
+  try {
+    await gameHistoryCollection.insertOne(entry);
+    winston.info("Game history saved to MongoDB");
+  } catch (err) {
+    winston.error("Error saving game history to MongoDB:", err);
+  }
 }
 
-// Helper function to save game history to a file
-function saveGameHistoryToFile() {
-  const historyData = gameHistory.map(entry => 
-    `Game: ${entry.players.join(" vs ")} - Started at ${entry.timestamp}`
-  ).join("\n");
-  fs.writeFileSync(historyFilePath, historyData, "utf8");
-}
-
-// Admin Login
+// WebSocket logic
 io.on("connection", (socket) => {
-  console.log("New client connected");
-  io.emit("queueUpdate", queue);
-  io.emit("playingUpdate", currentlyPlaying); // Send currently playing on connect
+  winston.info("New client connected");
+
+  socket.emit("queueUpdate", queue);
+  socket.emit("playingUpdate", currentlyPlaying);
 
   socket.on("adminLogin", (password) => {
     if (password === adminPassword) {
-      adminAuthenticated = true;
       socket.emit("loginSuccess");
     } else {
       socket.emit("loginFailed");
     }
   });
 
-  // Add Player
   socket.on("addPlayer", (playerName) => {
+    const { error } = playerSchema.validate({ name: playerName });
+    if (error) {
+      socket.emit("error", error.details[0].message);
+      return;
+    }
+
     queue.push({ name: playerName, paid: false });
     io.emit("queueUpdate", queue);
   });
 
-  // Swap Players
   socket.on("swapPlayers", ({ pos1, pos2 }) => {
-    if (pos1 >= 0 && pos2 >= 0 && pos1 < queue.length && pos2 < queue.length) {
+    const { error } = positionSchema.validate({ pos1, pos2 });
+    if (error) {
+      socket.emit("error", error.details[0].message);
+      return;
+    }
+
+    if (pos1 < queue.length && pos2 < queue.length) {
       [queue[pos1], queue[pos2]] = [queue[pos2], queue[pos1]];
       io.emit("queueUpdate", queue);
     }
   });
 
-  // Delete Top Pair
   socket.on("deleteTopPair", () => {
-    if (queue.length >= 2) {
-      queue.splice(0, 2);
-    } else if (queue.length === 1) {
-      queue.splice(0, 1);
-    }
+    queue.splice(0, Math.min(2, queue.length));
     io.emit("queueUpdate", queue);
   });
 
-  // Delete Player by Position
   socket.on("deletePlayerByPosition", (pos) => {
     if (pos >= 0 && pos < queue.length) {
       queue.splice(pos, 1);
@@ -81,7 +112,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Mark Player as Paid
   socket.on("markPlayerPaid", (pos) => {
     if (pos >= 0 && pos < queue.length) {
       queue[pos].paid = true;
@@ -89,71 +119,47 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Display Current Pair
-  socket.on("displayCurrentPair", () => {
+  socket.on("nextPairPlaying", async (callback) => {
     if (queue.length >= 2) {
-      socket.emit("displayCurrentPair", [queue[0].name, queue[1].name]);
+      const pair = queue.slice(0, 2);
+      if (!pair[0].paid || !pair[1].paid) {
+        const unpaidPlayer = !pair[0].paid ? pair[0].name : pair[1].name;
+        callback({ error: `${unpaidPlayer} is not yet paid.` });
+        return;
+      }
+
+      queue.splice(0, 2);
+      const timestamp = new Date().toISOString();
+      const entry = { players: [pair[0].name, pair[1].name], timestamp };
+      gameHistory.push(entry);
+
+      await saveGameHistory(entry);
+
+      currentlyPlaying = pair;
+      io.emit("queueUpdate", queue);
+      io.emit("playingUpdate", currentlyPlaying);
+      io.emit("gameHistoryUpdate", gameHistory);
+      callback({ success: true });
     } else {
-      socket.emit("displayCurrentPair", []);
+      callback({ error: "Not enough players in the queue." });
     }
   });
-
-  // Next Pair Playing - Replace Current Pair
-  socket.on("nextPairPlaying", (callback) => {
-    if (queue.length >= 2) {
-        const pair = queue.slice(0, 2); // Get top 2 players
-        if (!pair[0].paid || !pair[1].paid) {
-            const unpaidPlayer = !pair[0].paid ? pair[0].name : pair[1].name;
-            callback({ error: `${unpaidPlayer} is not yet paid. Please pay first before playing.` });
-            return;
-        }
-
-        queue.splice(0, 2); // Remove top 2 players from the queue
-
-        // Add to game history
-        const timestamp = new Date().toISOString();
-        gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
-
-        // Save history to file
-        saveGameHistoryToFile();
-
-        // Replace current pair if already playing
-        currentlyPlaying = pair;
-
-        io.emit("queueUpdate", queue);
-        io.emit("playingUpdate", currentlyPlaying);
-        io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
-        callback({ success: true });
-    } else {
-        callback({ error: "Not enough players in the queue." });
-    }
-});
 
   socket.on("requestGameHistory", () => {
     socket.emit("gameHistoryUpdate", gameHistory);
   });
 
-  // Clear Currently Playing
   socket.on("deleteCurrentlyPlaying", () => {
     currentlyPlaying = [];
     io.emit("playingUpdate", currentlyPlaying);
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
+    winston.info("Client disconnected");
   });
 });
 
-// Serve game history file
-app.get("/game-history", (req, res) => {
-  if (fs.existsSync(historyFilePath)) {
-    res.sendFile(historyFilePath);
-  } else {
-    res.status(404).send("Game history file not found.");
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Start the server
+server.listen(port, () => {
+  winston.info(`Server running on port ${port}`);
 });
