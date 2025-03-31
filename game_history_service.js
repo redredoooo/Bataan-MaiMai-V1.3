@@ -1,8 +1,6 @@
 const { MongoClient } = require("mongodb");
 
-const uri =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://Website:hGRwwSQoVoZpDfHe@maimaibataan.duve8cv.mongodb.net/?retryWrites=true&w=majority&appName=MaiMaiBataan";
+const uri = process.env.MONGODB_URI || "your-default-uri-here";
 const client = new MongoClient(uri);
 
 const dbName = "BataanMaiMaiCommunity";
