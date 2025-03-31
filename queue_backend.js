@@ -11,6 +11,12 @@ const io = socketIo(server, {
   },
 });
 
+const {
+  addGameHistory,
+  getGameHistory,
+  clearGameHistory,
+} = require("./game_history_service");
+
 let queue = [];
 let gameHistory = [];
 let currentlyPlaying = [];
@@ -20,8 +26,16 @@ const adminPassword = "Nachi";
 // Admin Login
 io.on("connection", (socket) => {
   console.log("New client connected");
-  io.emit("queueUpdate", queue);
-  io.emit("playingUpdate", currentlyPlaying); // Send currently playing on connect
+
+  // Emit initial data to the client
+  socket.emit("queueUpdate", queue); // Ensure queue is sent on connection
+  socket.emit("playingUpdate", currentlyPlaying); // Ensure currently playing is sent on connection
+
+  // Fetch game history from MongoDB and send to client
+  getGameHistory().then((history) => {
+    gameHistory = history;
+    socket.emit("gameHistoryUpdate", gameHistory);
+  });
 
   socket.on("adminLogin", (password) => {
     if (password === adminPassword) {
@@ -34,8 +48,10 @@ io.on("connection", (socket) => {
 
   // Add Player
   socket.on("addPlayer", (playerName) => {
-    queue.push({ name: playerName, paid: false });
-    io.emit("queueUpdate", queue);
+    if (playerName) { // Ensure playerName is not empty
+      queue.push({ name: playerName, paid: false });
+      io.emit("queueUpdate", queue); // Emit updated queue
+    }
   });
 
   // Swap Players
@@ -82,27 +98,38 @@ io.on("connection", (socket) => {
   });
 
   // Next Pair Playing - Replace Current Pair
-  socket.on("nextPairPlaying", () => {
+  socket.on("nextPairPlaying", async () => {
     if (queue.length >= 2) {
       const pair = queue.splice(0, 2); // Get top 2 players
-
-      // Add to game history
       const timestamp = new Date().toISOString();
-      gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
 
-      // Replace current pair if already playing
+      // Add to MongoDB game history
+      await addGameHistory([pair[0].name, pair[1].name], timestamp);
+
+      // Fetch updated game history from MongoDB
+      gameHistory = await getGameHistory();
+
+      // Replace current pair
       currentlyPlaying = pair;
 
-      io.emit("queueUpdate", queue);
-      io.emit("playingUpdate", currentlyPlaying);
+      io.emit("queueUpdate", queue); // Emit updated queue
+      io.emit("playingUpdate", currentlyPlaying); // Emit updated currently playing
       io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
     } else {
       socket.emit("errorMessage", "Not enough players in the queue.");
     }
   });
 
-  socket.on("requestGameHistory", () => {
+  socket.on("requestGameHistory", async () => {
+    gameHistory = await getGameHistory();
     socket.emit("gameHistoryUpdate", gameHistory);
+  });
+
+  socket.on("clearGameHistory", async () => {
+    const deletedCount = await clearGameHistory();
+    gameHistory = [];
+    io.emit("gameHistoryUpdate", gameHistory);
+    console.log(`Cleared ${deletedCount} game history records.`);
   });
 
   // Clear Currently Playing
