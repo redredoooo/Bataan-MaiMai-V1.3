@@ -4,6 +4,7 @@ const socketIo = require("socket.io");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 const server = http.createServer(app);
@@ -12,6 +13,30 @@ const io = socketIo(server, {
     origin: "*",
   },
 });
+
+const mongoUri = "mongodb+srv://python137124947:tBBm1jz8NDsTpAl1@maimaibataan.duve8cv.mongodb.net/?retryWrites=true&w=majority&appName=MaiMaiBataan";
+const dbName = "MaiMaiBataan";
+const collectionName = "gameHistory";
+
+let db, gameHistoryCollection;
+
+// Connect to MongoDB
+MongoClient.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(client => {
+    db = client.db(dbName);
+    gameHistoryCollection = db.collection(collectionName);
+    console.log("Connected to MongoDB");
+
+    // Load game history from MongoDB on server start
+    return gameHistoryCollection.find().toArray();
+  })
+  .then(history => {
+    gameHistory = history.map(entry => ({
+      players: entry.players,
+      timestamp: entry.timestamp
+    }));
+  })
+  .catch(err => console.error("Error connecting to MongoDB:", err));
 
 let queue = [];
 let gameHistory = [];
@@ -48,6 +73,15 @@ function saveGameHistoryToFile() {
     `Game: ${entry.players.join(" vs ")} - Started at ${entry.timestamp}`
   ).join("\n");
   fs.writeFileSync(historyFilePath, historyData, "utf8");
+}
+
+// Helper function to save game history to MongoDB
+async function saveGameHistoryToMongoDB(entry) {
+  try {
+    await gameHistoryCollection.insertOne(entry);
+  } catch (err) {
+    console.error("Error saving game history to MongoDB:", err);
+  }
 }
 
 // Admin Login
@@ -115,39 +149,49 @@ io.on("connection", (socket) => {
   });
 
   // Next Pair Playing - Replace Current Pair
-  socket.on("nextPairPlaying", (callback) => {
+  socket.on("nextPairPlaying", async (callback) => {
     if (queue.length >= 2) {
-        const pair = queue.slice(0, 2); // Get top 2 players
-        if (!pair[0].paid || !pair[1].paid) {
-            const unpaidPlayer = !pair[0].paid ? pair[0].name : pair[1].name;
-            callback({ error: `${unpaidPlayer} is not yet paid. Please pay first before playing.` });
-            return;
-        }
+      const pair = queue.slice(0, 2); // Get top 2 players
+      if (!pair[0].paid || !pair[1].paid) {
+        const unpaidPlayer = !pair[0].paid ? pair[0].name : pair[1].name;
+        callback({ error: `${unpaidPlayer} is not yet paid. Please pay first before playing.` });
+        return;
+      }
 
-        queue.splice(0, 2); // Remove top 2 players from the queue
+      queue.splice(0, 2); // Remove top 2 players from the queue
 
-        // Add to game history
-        const timestamp = new Date().toISOString();
-        gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
+      // Add to game history
+      const timestamp = new Date().toISOString();
+      const entry = { players: [pair[0].name, pair[1].name], timestamp };
+      gameHistory.push(entry);
 
-        // Save history to file
-        saveGameHistoryToFile();
+      // Save history to MongoDB
+      await saveGameHistoryToMongoDB(entry);
 
-        // Replace current pair if already playing
-        currentlyPlaying = pair;
+      // Replace current pair if already playing
+      currentlyPlaying = pair;
 
-        io.emit("queueUpdate", queue);
-        io.emit("playingUpdate", currentlyPlaying);
-        io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
-        callback({ success: true });
+      io.emit("queueUpdate", queue);
+      io.emit("playingUpdate", currentlyPlaying);
+      io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
+      callback({ success: true });
     } else {
-        callback({ error: "Not enough players in the queue." });
+      callback({ error: "Not enough players in the queue." });
     }
-});
+  });
 
   // Request Game History
-  socket.on("requestGameHistory", () => {
-    socket.emit("gameHistoryUpdate", gameHistory); // Emit the in-memory game history
+  socket.on("requestGameHistory", async () => {
+    try {
+      const history = await gameHistoryCollection.find().toArray();
+      socket.emit("gameHistoryUpdate", history.map(entry => ({
+        players: entry.players,
+        timestamp: entry.timestamp
+      })));
+    } catch (err) {
+      console.error("Error retrieving game history from MongoDB:", err);
+      socket.emit("gameHistoryUpdate", []);
+    }
   });
 
   // Clear Currently Playing
