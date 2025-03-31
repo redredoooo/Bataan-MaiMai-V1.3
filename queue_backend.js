@@ -99,27 +99,35 @@ io.on("connection", (socket) => {
   });
 
   // Next Pair Playing - Replace Current Pair
-  socket.on("nextPairPlaying", () => {
+  socket.on("nextPairPlaying", (callback) => {
     if (queue.length >= 2) {
-      const pair = queue.splice(0, 2); // Get top 2 players
+        const pair = queue.slice(0, 2); // Get top 2 players
+        if (!pair[0].paid || !pair[1].paid) {
+            const unpaidPlayer = !pair[0].paid ? pair[0].name : pair[1].name;
+            callback({ error: `${unpaidPlayer} is not yet paid. Please pay first before playing.` });
+            return;
+        }
 
-      // Add to game history
-      const timestamp = new Date().toISOString();
-      gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
+        queue.splice(0, 2); // Remove top 2 players from the queue
 
-      // Save history to file
-      saveGameHistoryToFile();
+        // Add to game history
+        const timestamp = new Date().toISOString();
+        gameHistory.push({ players: [pair[0].name, pair[1].name], timestamp });
 
-      // Replace current pair if already playing
-      currentlyPlaying = pair;
+        // Save history to file
+        saveGameHistoryToFile();
 
-      io.emit("queueUpdate", queue);
-      io.emit("playingUpdate", currentlyPlaying);
-      io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
+        // Replace current pair if already playing
+        currentlyPlaying = pair;
+
+        io.emit("queueUpdate", queue);
+        io.emit("playingUpdate", currentlyPlaying);
+        io.emit("gameHistoryUpdate", gameHistory); // Emit updated game history
+        callback({ success: true });
     } else {
-      socket.emit("errorMessage", "Not enough players in the queue.");
+        callback({ error: "Not enough players in the queue." });
     }
-  });
+});
 
   socket.on("requestGameHistory", () => {
     socket.emit("gameHistoryUpdate", gameHistory);

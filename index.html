@@ -75,8 +75,8 @@
         .scroll-item {
             flex: 0 0 auto;
             scroll-snap-align: center;
-            width: 100%; /* Full width for vertical scrolling */
-            height: 195px; /* Maintain consistent height */
+            width: 1080px; /* Adjusted width */
+            height: 1350px; /* Adjusted height */
             background: #444;
             border-radius: 12px;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
@@ -138,12 +138,26 @@
         <div class="w-full max-w-2xl mt-6">
             <h2 class="text-2xl font-semibold mb-4 text-center">Announcements</h2>
             <div class="scroll-container">
-                <div class="scroll-item">Image 1</div>
+                <div class="scroll-item">
+                    <img src="assets/images/announcement01.png" alt="Announcement 1" class="w-full h-full object-cover rounded-lg">
+                </div>
                 <div class="scroll-item">Image 2</div>
                 <div class="scroll-item">Image 3</div>
                 <div class="scroll-item">Image 4</div>
                 <div class="scroll-item">Image 5</div>
             </div>
+        </div>
+        <!-- Discord Webhook Section -->
+        <div class="w-full max-w-2xl mt-6 bg-gray-900 p-4 rounded-lg shadow-lg soft-glow">
+            <h2 class="text-xl font-semibold mb-4 text-center">Live Bounty Updates</h2>
+            <iframe 
+                src="https://discord.com/api/webhooks/1355912688617656491/W26LOwG0vG90aE72h76CnR24Y--erQOt6csAVAYmpm_OPlDDuK7fYLCHLmMJWXl0brt7" 
+                width="100%" 
+                height="800" <!-- Increased height -->
+                allowtransparency="true" 
+                frameborder="0" 
+                class="rounded-lg">
+            </iframe>
         </div>
         <div class="flex flex-wrap gap-4 justify-center mt-6">
             <button onclick="showQueuePage()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded shadow-hover soft-glow">Queue</button>
@@ -246,21 +260,26 @@
         }
 
         function fetchGameHistory() {
-            fetch("/game-history")
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch game history.");
-                    }
-                    return response.text();
-                })
-                .then(data => {
-                    document.getElementById("historyContent").textContent = data || "No game history available.";
-                })
-                .catch(error => {
-                    console.error("Error fetching game history:", error);
-                    document.getElementById("historyContent").textContent = "Error loading game history. Please try again later.";
-                });
+            socket.emit("requestGameHistory"); // Request game history from the server
         }
+
+        // Update game history display
+        function updateGameHistoryDisplay(history) {
+            const historyContent = document.getElementById("historyContent");
+            historyContent.innerHTML = history.length
+                ? history
+                      .map(
+                          entry =>
+                              `<div class="p-2 bg-gray-700 rounded text-center">Game: ${entry.players.join(
+                                  " vs "
+                              )} - Started at ${new Date(entry.timestamp).toLocaleString()}</div>`
+                      )
+                      .join("")
+                : "No game history available.";
+        }
+
+        // Listen for game history updates
+        socket.on("gameHistoryUpdate", updateGameHistoryDisplay);
 
         function toggleAdminControls(show) {
             document.getElementById('admin-login').classList.toggle('hidden', show);
@@ -337,7 +356,11 @@
         }
 
         function nextPairPlaying() {
-            socket.emit("nextPairPlaying");
+            socket.emit("nextPairPlaying", (response) => {
+                if (response.error) {
+                    alert(response.error); // Notify user if a player is unpaid
+                }
+            });
         }
 
         function deleteCurrentlyPlaying() {
@@ -456,6 +479,17 @@
                     const walk = (x - startX) * 1.5; // Adjust scroll speed for smoother movement
                     container.scrollLeft = scrollLeft - walk;
                 });
+            });
+        });
+
+        // Ensure image placeholders are displayed correctly
+        document.addEventListener("DOMContentLoaded", () => {
+            const scrollContainer = document.querySelector(".scroll-container");
+            const scrollItems = scrollContainer.querySelectorAll(".scroll-item");
+            scrollItems.forEach((item, index) => {
+                if (!item.textContent.trim() && index !== 0) {
+                    item.style.display = "none"; // Hide empty placeholders unless it's the first one
+                }
             });
         });
     </script>
