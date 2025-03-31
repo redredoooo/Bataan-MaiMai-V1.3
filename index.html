@@ -133,31 +133,29 @@
 <body class="text-white min-h-screen flex flex-col items-center py-10 px-4">
     <h1 class="text-4xl font-extrabold mb-6 text-center fade-in p-4">MaiMai Bataan</h1>
 
-    <!-- Landing Page -->
+    <!-- Currently Playing Section (Duplicate) -->
+    <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
+        <h2 class="text-2xl font-semibold mb-4 text-center">Currently Playing</h2>
+        <div id="playingListTop" class="grid grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Announcements Section -->
     <div id="landing-page" class="fade-in">
         <div class="w-full max-w-2xl mt-6">
             <h2 class="text-2xl font-semibold mb-4 text-center">Announcements</h2>
-            <div class="scroll-container">
-                <div class="scroll-item">
-                    <img src="announcement01.png" alt="Announcement 1" class="w-full h-full object-cover rounded-lg">
+            <div class="relative overflow-hidden">
+                <div id="announcementSlider" class="flex transition-transform duration-500">
+                    <div class="flex-shrink-0 w-full">
+                        <img src="announcement01.png" alt="Announcement 1" class="w-full h-auto object-cover rounded-lg">
+                    </div>
+                    <div class="flex-shrink-0 w-full">
+                        <img src="announcement02.png" alt="Announcement 2" class="w-full h-auto object-cover rounded-lg">
+                    </div>
+                    <!-- ...additional slides... -->
                 </div>
-                <div class="scroll-item">Image 2</div>
-                <div class="scroll-item">Image 3</div>
-                <div class="scroll-item">Image 4</div>
-                <div class="scroll-item">Image 5</div>
+                <button onclick="prevSlide()" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded">❮</button>
+                <button onclick="nextSlide()" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded">❯</button>
             </div>
-        </div>
-        <!-- Discord Webhook Section -->
-        <div class="w-full max-w-2xl mt-6 bg-gray-900 p-4 rounded-lg shadow-lg soft-glow">
-            <h2 class="text-xl font-semibold mb-4 text-center">Live Bounty Updates</h2>
-            <iframe 
-                src="https://discord.com/widget?id=1355912688617656491&theme=dark" 
-                width="100%" 
-                height="800" <!-- Increased height -->
-                allowtransparency="true" 
-                frameborder="0" 
-                class="rounded-lg">
-            </iframe>
         </div>
         <div class="flex flex-wrap gap-4 justify-center mt-6">
             <button onclick="showQueuePage()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded shadow-hover soft-glow">Queue</button>
@@ -181,14 +179,14 @@
         <!-- Currently Playing List -->
         <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
             <h2 class="text-2xl font-semibold mb-4 text-center">Currently Playing</h2>
-            <div id="playingList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            <div id="playingList" class="grid grid-cols-2 gap-4"></div>
         </div>
 
         <!-- Queue Display -->
         <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
             <h2 class="text-2xl font-semibold mb-4 text-center">Current Queue</h2>
             <p class="mb-4 text-gray-400 text-center">Total Queued Players: <span id="queueCount" class="font-bold text-white">0</span></p>
-            <div id="queueList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            <div id="queueList" class="grid grid-cols-2 gap-4"></div>
         </div>
 
         <!-- Admin Controls -->
@@ -313,9 +311,12 @@
 
         function updatePlayingDisplay(playing) {
             const playingList = document.getElementById("playingList");
-            playingList.innerHTML = playing.map((player, index) =>
+            const playingListTop = document.getElementById("playingListTop");
+            const content = playing.map((player, index) =>
                 `<div class="p-2 bg-green-700 rounded text-center">${index + 1}. ${player.name} (Playing)</div>`
             ).join('');
+            playingList.innerHTML = content;
+            playingListTop.innerHTML = content;
         }
 
         function addPlayer() {
@@ -492,6 +493,42 @@
                 }
             });
         });
+
+        let currentSlide = 0;
+
+        function nextSlide() {
+            const slider = document.getElementById("announcementSlider");
+            const slides = slider.children.length;
+            currentSlide = (currentSlide + 1) % slides;
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+        }
+
+        function prevSlide() {
+            const slider = document.getElementById("announcementSlider");
+            const slides = slider.children.length;
+            currentSlide = (currentSlide - 1 + slides) % slides;
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+        }
+
+        function updatePlayingDisplay(playing) {
+            const playingList = document.getElementById("playingList");
+            const playingListTop = document.getElementById("playingListTop");
+            const content = playing.map((player, index) =>
+                `<div class="p-2 bg-green-700 rounded text-center">${index + 1}. ${player.name} (Playing)</div>`
+            ).join('');
+            playingList.innerHTML = content;
+            playingListTop.innerHTML = content;
+        }
+
+        function updateQueueDisplay(queue) {
+            const queueList = document.getElementById("queueList");
+            queueList.innerHTML = queue.map((player, index) =>
+                `<div class="p-2 bg-gray-700 rounded text-center">${index + 1}. ${player.name} ${player.paid ? "(Paid)" : "(Unpaid)"}</div>`
+            ).join('');
+        }
+
+        socket.on("queueUpdate", updateQueueDisplay);
+        socket.on("playingUpdate", updatePlayingDisplay);
     </script>
 </body>
 </html>
