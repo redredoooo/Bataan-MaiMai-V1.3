@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaiMai Bataan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <style>
+        /* Monochromatic gradient background */
+        body {
+            background: linear-gradient(120deg, #000000, #1a1a1a, #333333);
+            background-size: 300% 300%;
+            animation: gradientMove 10s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Custom animations and effects */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .hover-scale:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .shadow-hover:hover {
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+            transition: box-shadow 0.2s ease-in-out;
+        }
+
+        /* Soft glow effect */
+        .soft-glow {
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .soft-glow:hover {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 0 0 25px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Horizontal scroll styling */
+        .scroll-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding: 1rem 0;
+            scroll-snap-type: x mandatory;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for better mobile experience */
+        }
+
+        .scroll-item {
+            flex: 0 0 auto;
+            scroll-snap-align: center;
+            width: 260px; /* Increased by 30% */
+            height: 195px; /* Increased by 30% */
+            background: #444;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col items-center py-10 px-4">
+    <h1 class="text-4xl font-extrabold mb-6 text-center fade-in p-4">Player Queue System</h1>
+
+    <!-- Announcements Section -->
+    <div class="w-full max-w-2xl mt-6 fade-in">
+        <h2 class="text-2xl font-semibold mb-4 text-center">Announcements</h2>
+        <div class="scroll-container">
+            <div class="scroll-item">Image 1</div>
+            <div class="scroll-item">Image 2</div>
+            <div class="scroll-item">Image 3</div>
+            <div class="scroll-item">Image 4</div>
+            <div class="scroll-item">Image 5</div>
+        </div>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="admin-login" class="mt-6 w-full max-w-md fade-in">
+        <input type="password" id="adminPassword" placeholder="Enter Admin Password" class="p-3 rounded bg-gray-800 text-white w-full mb-4 soft-glow">
+        <button onclick="adminLogin()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Admin Login</button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="mt-6 hidden w-full max-w-md fade-in">
+        <button onclick="adminLogout()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Logout</button>
+    </div>
+
+    <!-- Currently Playing List -->
+    <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
+        <h2 class="text-2xl font-semibold mb-4 text-center">Currently Playing</h2>
+        <div id="playingList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Queue Display -->
+    <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
+        <h2 class="text-2xl font-semibold mb-4 text-center">Current Queue</h2>
+        <p class="mb-4 text-gray-400 text-center">Total Queued Players: <span id="queueCount" class="font-bold text-white">0</span></p>
+        <div id="queueList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Admin Controls -->
+    <div id="admin-controls" class="mt-6 hidden w-full max-w-2xl fade-in">
+        <div class="mb-4">
+            <input type="text" id="playerName" placeholder="Enter player name" class="p-3 rounded bg-gray-800 text-white w-full mb-2 soft-glow">
+            <button onclick="addPlayer()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Add Player</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+                <input type="number" id="pos1" placeholder="Position 1" class="p-3 rounded bg-gray-800 text-white w-full mb-2 soft-glow">
+                <input type="number" id="pos2" placeholder="Position 2" class="p-3 rounded bg-gray-800 text-white w-full soft-glow">
+            </div>
+            <button onclick="swapPlayers()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Swap</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+                <input type="number" id="deletePos" placeholder="Position to Delete" class="p-3 rounded bg-gray-800 text-white w-full soft-glow">
+            </div>
+            <button onclick="deletePlayerByPosition()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Delete Player</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+                <input type="number" id="paidPos" placeholder="Position to Mark Paid" class="p-3 rounded bg-gray-800 text-white w-full soft-glow">
+            </div>
+            <button onclick="markPlayerPaid()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded w-full shadow-hover soft-glow">Mark Paid</button>
+        </div>
+
+        <div class="flex flex-wrap gap-4 justify-center">
+            <button onclick="deleteTopPair()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded shadow-hover soft-glow">Delete Top Pair</button>
+            <button onclick="nextPairPlaying()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded shadow-hover soft-glow">Next Pair Playing</button>
+            <button onclick="deleteCurrentlyPlaying()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded shadow-hover soft-glow">Clear Currently Playing</button>
+            <button onclick="restartBackend()" class="bg-gray-700 hover:bg-gray-600 text-white py-3 px-6 rounded shadow-hover soft-glow">Server Restart</button>
+        </div>
+    </div>
+
+    <!-- History Display -->
+    <div class="w-full max-w-2xl bg-gray-900 p-6 rounded-lg shadow-lg mt-6 fade-in soft-glow">
+        <h2 class="text-2xl font-semibold mb-4 text-center">Game History</h2>
+        <div id="gameHistoryList" class="grid grid-cols-1 gap-4"></div>
+    </div>
+
+    <script>
+        const socket = io("https://bataan-maimai-v1-3.onrender.com");
+
+        function toggleAdminControls(show) {
+            document.getElementById('admin-login').classList.toggle('hidden', show);
+            document.getElementById('admin-panel').classList.toggle('hidden', !show);
+            document.getElementById('admin-controls').classList.toggle('hidden', !show);
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'Nachi') {
+                toggleAdminControls(true);
+                alert('Admin login successful!');
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        function adminLogout() {
+            toggleAdminControls(false);
+            alert('Logged out successfully!');
+        }
+
+        function updateQueueDisplay(queue) {
+            const queueList = document.getElementById("queueList");
+            const queueCount = document.getElementById("queueCount");
+            queueList.innerHTML = queue.map((player, index) =>
+                `<div class="p-2 bg-gray-700 rounded text-center">${index + 1}. ${player.name} ${player.paid ? "(Paid)" : "(Unpaid)"}</div>`
+            ).join('');
+            queueCount.textContent = queue.length;
+        }
+
+        function updatePlayingDisplay(playing) {
+            const playingList = document.getElementById("playingList");
+            playingList.innerHTML = playing.map((player, index) =>
+                `<div class="p-2 bg-green-700 rounded text-center">${index + 1}. ${player.name} (Playing)</div>`
+            ).join('');
+        }
+
+        function addPlayer() {
+            const name = document.getElementById("playerName").value.trim();
+            if (name) {
+                socket.emit("addPlayer", name);
+                document.getElementById("playerName").value = "";
+            }
+        }
+
+        function swapPlayers() {
+            socket.emit("swapPlayers", {
+                pos1: parseInt(document.getElementById("pos1").value) - 1,
+                pos2: parseInt(document.getElementById("pos2").value) - 1
+            });
+        }
+
+        function deletePlayerByPosition() {
+            socket.emit('deletePlayerByPosition', parseInt(document.getElementById('deletePos').value) - 1);
+        }
+
+        function markPlayerPaid() {
+            socket.emit('markPlayerPaid', parseInt(document.getElementById('paidPos').value) - 1);
+        }
+
+        function restartBackend() {
+            fetch("https://api.render.com/deploy/srv-cvcdpupu0jms73eqmvag?key=nLT66_CWs3M", { method: "POST" })
+            .then(response => alert(response.ok ? "Backend restart triggered!" : "Failed to restart backend."))
+            .catch(console.error);
+        }
+
+        function deleteTopPair() {
+            socket.emit("deleteTopPair");
+        }
+
+        function showCurrentPair() {
+            socket.emit('getCurrentPair');
+        }
+
+        function nextPairPlaying() {
+            socket.emit("nextPairPlaying");
+        }
+
+        function deleteCurrentlyPlaying() {
+            socket.emit("deleteCurrentlyPlaying");
+        }
+
+        function restartBackend() {
+            fetch("https://api.render.com/deploy/srv-cvcdpupu0jms73eqmvag?key=nLT66_CWs3M", {
+                method: "POST"
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Backend restart triggered!");
+                } else {
+                    alert("Failed to restart backend.");
+                }
+            })
+            .catch(error => {
+                console.error("Error restarting backend:", error);
+            });
+        }
+
+        // Function to update game history display
+        function updateGameHistoryDisplay(history) {
+            const gameHistoryList = document.getElementById("gameHistoryList");
+            gameHistoryList.innerHTML = "";
+            history.forEach((entry, index) => {
+                const div = document.createElement("div");
+                div.className = "p-2 bg-gray-700 rounded text-center";
+                div.textContent = `Game ${index + 1}: ${entry.players.join(" vs ")} - Started at ${new Date(entry.timestamp).toLocaleString()}`;
+                gameHistoryList.appendChild(div);
+            });
+        }
+        
+        // Listen for game history updates
+        socket.on("gameHistoryUpdate", (history) => {
+            updateGameHistoryDisplay(history);
+        });
+
+        // Request game history when the page loads
+        window.onload = function() {
+            socket.emit("requestGameHistory");
+        };
+
+        socket.on("queueUpdate", updateQueueDisplay);
+        socket.on("playingUpdate", updatePlayingDisplay);
+        window.onload = () => socket.emit("requestGameHistory");
+    </script>
+</body>
+</html>
